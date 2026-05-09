@@ -8,7 +8,9 @@
 
 struct RpClump;
 struct RpLight;
+struct RwCamera;
 struct RpWorld;
+struct RpAtomic;
 
 typedef RpClump* (*RpClumpCallBack)(RpClump* clump, void *data);
 struct RpClumpChunkInfo
