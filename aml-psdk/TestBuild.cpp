@@ -10,6 +10,7 @@ MYMOD(net.psdk.mymod.guid, AML PSDK Template, 1.0, Author)
 #include <aml-psdk/renderware/RwBase.h>
 #include <aml-psdk/renderware/RwVector.h>
 
+#include <aml-psdk/renderware/RpAtomic.h>
 #include <aml-psdk/renderware/RpGeometry.h>
 #include <aml-psdk/renderware/RpClump.h>
 #include <aml-psdk/renderware/RwFrame.h>

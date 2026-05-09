@@ -7,11 +7,12 @@
 #include "RwObject.h"
 
 struct RpClump;
+struct RpAtomic;
 struct RpLight;
 struct RwCamera;
 struct RpWorld;
-struct RpAtomic;
 
+typedef RpAtomic *(*RpAtomicCallBack)(RpAtomic *, void *);
 typedef RpClump* (*RpClumpCallBack)(RpClump* clump, void *data);
 struct RpClumpChunkInfo
 {
@@ -40,7 +41,7 @@ DECL_FASTCALL_SIMPLE_GLO(ClumpDeInitCameraExt, _ZL20ClumpDeInitCameraExtPvii, vo
 DECL_FASTCALL_SIMPLE_GLO(ClumpInitLightExt, _ZL17ClumpInitLightExtPvii, void*, void* object, RwInt32 offsetInObject, RwInt32 sizeInObject);
 DECL_FASTCALL_SIMPLE_GLO(ClumpDeInitLightExt, _ZL19ClumpDeInitLightExtPvii, void*, void* object, RwInt32 offsetInObject, RwInt32 sizeInObject);
 DECL_FASTCALL_SIMPLE_GLO(RpClumpGetNumAtomics, _Z20RpClumpGetNumAtomicsP7RpClump, RwInt32, RpClump* clump);
-//DECL_FASTCALL_SIMPLE_GLO(RpClumpForAllAtomics, _Z20RpClumpForAllAtomicsP7RpClumpPFP8RpAtomicS2_PvES3_, RpClump*, RpClump* clump, RpAtomicCallBack callback, void* pData);
+DECL_FASTCALL_SIMPLE_GLO(RpClumpForAllAtomics, _Z20RpClumpForAllAtomicsP7RpClumpPFP8RpAtomicS2_PvES3_, RpClump*, RpClump* clump, RpAtomicCallBack callback, void* pData);
 DECL_FASTCALL_SIMPLE_GLO(RpClumpGetNumLights, _Z19RpClumpGetNumLightsP7RpClump, RwInt32, RpClump* clump);
 //DECL_FASTCALL_SIMPLE_GLO(RpClumpForAllLights, _Z19RpClumpForAllLightsP7RpClumpPFP7RpLightS2_PvES3_, RpClump*, RpClump* clump, RpLightCallBack callback, void* pData);
 DECL_FASTCALL_SIMPLE_GLO(RpClumpGetNumCameras, _Z20RpClumpGetNumCamerasP7RpClump, RwInt32, RpClump* clump);

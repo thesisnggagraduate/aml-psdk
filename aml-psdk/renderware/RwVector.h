@@ -32,4 +32,10 @@ union RQVector
     }
 };
 
+struct RwSphere
+{
+    RwV3d center;
+    RwReal radius;
+};
+
 #endif // __AML_PSDK_RWVECTOR_H
