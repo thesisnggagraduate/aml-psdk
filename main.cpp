@@ -2,93 +2,111 @@
 #include <mod/logger.h>
 #include <mod/config.h>
 #include <aml-psdk/game_sa/base/Timer.h>
-#include <aml-psdk/game_sa/controls.h> // Para sa control constants
-#include <aml-psdk/game_sa/player.h>   // Para sa player functions
-#include <aml-psdk/game_sa/vehicle.h>  // Para sa vehicle functions
+#include <aml-psdk/game_sa/controls.h>
+#include <aml-psdk/game_sa/player.h>
+#include <aml-psdk/game_sa/vehicle.h>
 
-MYMODCFG(net.psdk.mymod.guid, AML PSDK Template, 1.0, Author)
+MYMODCFG(net.psdk.mymod.guid, AML PSDK Realistic Overheat, 1.0, Author)
 
-static int holdCounter = 0;
 static bool isSkidding = false;
-static bool tireFlat = false;
 static int skidStartTime = 0;
-static int skidDuration = 3000; // milliseconds before tire goes flat
 
-// Function to get current vehicle player is in
+static bool isOverheated = false;
+static int overheatStartTime = 0;
+
+static bool isBlown = false;
+static int blowoutTime = 0;
+
+const int skidThreshold = 3000; // 3 seconds
+const int overheatThreshold = 180000; // 3 minutes in milliseconds
+const int blowoutThreshold = 360000; // 6 minutes in milliseconds (total after start)
+
+// Kumuha ng vehicle ng player
 int GetPlayerVehicle()
 {
     int ped = PLAYER_PED_ID();
-    int vehicle = GET_VEHICLE_PED_IS_IN(ped, false);
-    return vehicle;
+    return GET_VEHICLE_PED_IS_IN(ped, false);
 }
 
-// Function to simulate fire on tire (placeholder)
+// Placeholder function para sa blowout effect
 void CreateFireOnTire(int vehicle, int tireIndex)
 {
-    logger->Info("Fire effect activated on tire %d of vehicle %d", tireIndex, vehicle);
+    logger->Info("Fire sa tire %d ng sasakyan %d", tireIndex, vehicle);
 }
 
-// Function to set tire flat (placeholder)
-void SetTireFlat(int vehicle, int tireIndex)
+// Placeholder function para sa blowout ng gulong
+void BlowoutTire(int vehicle, int tireIndex)
 {
-    logger->Info("Tire %d of vehicle %d is now flat", tireIndex, vehicle);
+    logger->Info("Gulong %d ng sasakyan %d ay sumabog", tireIndex, vehicle);
+    isBlown = true;
+    blowoutTime = CTimer::m_snTimeInMilliseconds;
 }
 
-// Detect control input and handle skid/flat logic
-void CheckHandbrakeAndSkid()
+// Check control at manage ang skid, overheat, at blowout
+void CheckSkidOverheatAndBlowout()
 {
     int vehicle = GetPlayerVehicle();
     if (vehicle == 0)
-        return; // No vehicle, do nothing
+        return; // walang vehicle
 
     if (IsControlPressed(0, CONTROL_HAND_BRAKE))
     {
-        holdCounter += CTimer::m_snTimeInMilliseconds; // accumulate hold time
-        if (holdCounter > 2000 && !isSkidding)
+        static int holdStartTime = 0;
+        if (holdStartTime == 0)
+            holdStartTime = CTimer::m_snTimeInMilliseconds;
+
+        int heldTime = CTimer::m_snTimeInMilliseconds - holdStartTime;
+        if (heldTime > skidThreshold && !isSkidding)
         {
-            // Start skid
+            // Simula ng skid
             isSkidding = true;
             skidStartTime = CTimer::m_snTimeInMilliseconds;
-            logger->Info("Skid started");
-            // Optional: trigger skid animation/effect here
+            isOverheated = false;
+            logger->Info("Skid nagsimula");
         }
     }
     else
     {
-        holdCounter = 0;
-        if (isSkidding && !tireFlat)
+        // Inalis ang handbrake
+        if (isSkidding && !isOverheated)
         {
-            // After releasing, convert tire to flat
-            int tireIndex = 0; // Choose which tire to flat
-            SetTireFlat(vehicle, tireIndex);
-            tireFlat = true;
-            isSkidding = false;
+            int currentTime = CTimer::m_snTimeInMilliseconds;
+            int skidDuration = currentTime - skidStartTime;
+
+            // Kapag umabot ng 3 minuto (180,000 ms), magsimula ang overheat
+            if (skidDuration > overheatThreshold && !isOverheated)
+            {
+                isOverheated = true;
+                overheatStartTime = CTimer::m_snTimeInMilliseconds;
+                logger->Info("Gulong nagsimula umapoy (overheat)");
+                // Maaari kang maglagay dito ng visual effect
+            }
         }
+        // Reset kapag hindi na skid
+        holdStartTime = 0;
+        isSkidding = false;
     }
 
-    // Check skid duration for flat tire
-    if (isSkidding && !tireFlat)
+    // Kapag overheat na, maghintay ng 6 minuto bago sumabog
+    if (isOverheated && !isBlown)
     {
         int currentTime = CTimer::m_snTimeInMilliseconds;
-        if (currentTime - skidStartTime > skidDuration)
+        if (currentTime - overheatStartTime > blowoutThreshold)
         {
-            int tireIndex = 0; // Choose which tire to flat
-            SetTireFlat(vehicle, tireIndex);
-            tireFlat = true;
-            isSkidding = false;
-            logger->Info("Tire has gone flat after skid");
+            // Sumabog ang gulong
+            BlowoutTire(vehicle, 0);
+            logger->Info("Gulong sumabog pagkatapos umapoy ng 3 minuto at tumagal pa ng 3 minuto");
         }
     }
 }
 
-// Main hook
+// Hook function
 DECL_HOOKv(CTimer__Update)
 {
     CTimer__Update();
     CTimer::m_snTimeInMilliseconds += 5;
 
-    // Custom logic
-    CheckHandbrakeAndSkid();
+    CheckSkidOverheatAndBlowout();
 
     logger->Info("CTimer__Update: %u", CTimer::m_snTimeInMilliseconds);
     CTimer::m_snTimeInMilliseconds -= 5;
@@ -96,6 +114,6 @@ DECL_HOOKv(CTimer__Update)
 
 ON_MOD_LOAD()
 {
-    logger->SetTag("SkidMechanic");
+    logger->SetTag("RealisticOverheat");
     HOOK(CTimer__Update, CTimer::Update);
 }
